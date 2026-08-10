@@ -10,7 +10,7 @@ Your challenge repo should have, by now:
 terraform/        # your week 1 build
 policies/         # your week 2 policies
 plan.json         # terraform show -json of your compliant plan, committed
-.github/workflows/grc-gate.yml   # this file, completed
+.github/workflows/grc-gate.yml   # this file, completed.
 ```
 
 Generate `plan.json` from your week 1 dir and commit it:
