@@ -26,7 +26,16 @@ deny contains msg if {
 	not has_encryption(bucket.name)
 	msg := sprintf("SC-28: bucket %q has no server-side encryption configuration. Add an aws_s3_bucket_server_side_encryption_configuration resource referencing it.", [bucket.name])
 }
+approved_algorithms := {"AES256", "aws:kms"}
 
+deny contains msg if {
+	some resource in input.planned_values.root_module.resources
+	resource.type == "aws_s3_bucket_server_side_encryption_configuration"
+	some rule in resource.values.rule
+	some setting in rule.apply_server_side_encryption_by_default
+	not setting.sse_algorithm in approved_algorithms
+	msg := sprintf("SC-28: %s specifies encryption algorithm %q, which is not an approved algorithm. Use AES256 or aws:kms.", [resource.address, setting.sse_algorithm])
+}
 has_encryption(bucket_name) if {
 	some resource in input.configuration.root_module.resources
 	resource.type == "aws_s3_bucket_server_side_encryption_configuration"
