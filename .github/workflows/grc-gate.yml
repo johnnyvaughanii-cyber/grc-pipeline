@@ -1,0 +1,49 @@
+# grc-gate: run the policy gate on every pull request.
+# This is a skeleton. The steps marked TODO are yours to write. The brief on
+# Patreon explains what each one does and why.
+name: grc-gate
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  grc-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # TODO: install Conftest (pin a version, do not use latest).
+        - name: Install Conftest
+          run: |
+            CONFTEST_VERSION=0.69.0
+            wget -q "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz"
+            tar xzf "conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz"
+            sudo mv conftest /usr/local/bin
+            conftest --version
+      # TODO: run your three policy namespaces against the committed plan.json.
+        - name: Run policy gate
+          run: |
+            set -o pipefail
+            mkdir -p evidence
+            conftest test week-3/evidence/plan.json \
+              --policy week-2/policies \
+              --namespace compliance.sc28_aws \
+              --namespace compliance.ac3_aws \
+              --namespace compliance.cm6_aws \
+              --output json | tee evidence/conftest-results.json
+      # TODO: upload evidence/ as a build artifact, with `if: always()` so the
+        - name: Upload evidence
+          if: always()
+          uses: actions/upload-artifact@v4
+          with:
+            name: grc-gate-evidence
+            path: evidence/
+
+      # STRETCH: instead of a committed plan.json, assume an AWS role via OIDC
+      #          (no stored keys) and generate the plan in CI. See the brief.
