@@ -11,7 +11,7 @@ Built as part of the GRC Engineering Club six-week challenge.
 | [1](week-1/) | Terraform for an S3 bucket enforcing SC-28, AC-3, CM-6, and AU-3, with proof emitted as JSON | Complete |
 | [2](week-2/) | Rego policies that read the week 1 plan and return a verdict per control | Complete |
 | [3](week-3/) | GitHub Actions gate that runs the policies on every pull request and blocks failures | Complete |
-| 4 | Keyless signing of pipeline evidence for chain of custody | — |
+| [4](week-4/) | Keyless signing of pipeline evidence for chain of custody | Complete |
 | 5 | Native cloud monitoring controls, findings captured as evidence | — |
 | 6 | NIST 800-53 mapping in OSCAL with evidence links | — |
 

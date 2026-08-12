@@ -1,0 +1,17 @@
+[
+	{
+		"filename": "week-3/evidence/plan.json",
+		"namespace": "compliance.sc28_aws",
+		"successes": 2
+	},
+	{
+		"filename": "week-3/evidence/plan.json",
+		"namespace": "compliance.ac3_aws",
+		"successes": 2
+	},
+	{
+		"filename": "week-3/evidence/plan.json",
+		"namespace": "compliance.cm6_aws",
+		"successes": 1
+	}
+]
