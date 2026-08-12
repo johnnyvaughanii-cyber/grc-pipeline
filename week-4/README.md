@@ -1,44 +1,66 @@
-# Week 4 starter: Evidence You Can Trust
+# Week 4: Evidence You Can Trust
 
-Chain of custody means anyone can prove your evidence is authentic and untouched, without trusting you. You build two things: a signing step that runs in your pipeline, and a verify script that checks the result.
+The pipeline signs the evidence it produces. Anyone can verify that a bundle came from this repository's workflow and has not been altered since, without trusting the person who hands it to them.
 
-## The signing step (you add it to week 3's workflow)
+## Chain of custody, mapped to artifacts
 
-After your gate produces `evidence/`, add a step that:
+| Property | Question it answers | Artifact that proves it |
+|---|---|---|
+| Authenticity | Who produced this? | `evidence-bundle.tar.gz.sig.bundle` — a Sigstore certificate binding the signature to this repository and this workflow file |
+| Integrity | Has it changed since? | `evidence-bundle.tar.gz.sha256` — the archive's SHA-256, recomputed and compared at verification |
+| Timeliness | When was it produced? | The Rekor transparency log entry recorded inside the signature bundle, with a signed timestamp |
+| Preservation | Can it still be retrieved, unaltered? | The bundle is committed to this repository. The stretch goal, an S3 Object Lock vault, is not implemented |
 
-1. Bundles `evidence/` into a single `.tar.gz`.
-2. Writes the bundle's SHA-256 to a `.sha256` sidecar file.
-3. Signs the bundle with Cosign, keyless: `cosign sign-blob --yes --bundle evidence.sig.bundle <bundle>`.
+## Keyless signing
 
-Keyless signing means no private key. In GitHub Actions, Cosign uses the workflow's OIDC token, so the signature is tied to your pipeline run. The job needs `permissions: id-token: write` or the signing fails. The `--bundle` file packs the signature, the certificate, and the transparency-log entry into one file your verifier reads.
+The workflow signs with Cosign in keyless mode. There is no private key anywhere in this repository, in GitHub Secrets, or in any cloud account.
 
-You can also sign locally to learn the flow: `cosign sign-blob` will open a browser for a one-time identity check. Still free, still keyless.
+Instead the runner requests a short-lived OIDC token from GitHub asserting which workflow in which repository is executing. Sigstore validates that token, issues a certificate valid for a few minutes bound to that identity, signs the artifact, and records the event in a public transparency log. The certificate then expires.
 
-## The verify script (fill in verify-evidence.sh)
+The property that matters: the certificate encodes `grc-gate.yml` in this repository as the signer, and that fact lives in Sigstore's public log rather than in infrastructure the repository owner controls. An administrator with full access to this account cannot forge a signature attributing evidence to a pipeline run that did not happen.
 
-Three checks, each exits non-zero on failure:
+## Signing survives a failed gate
 
-1. **Integrity.** Recompute the SHA-256, compare to the sidecar.
-2. **Authenticity.** `cosign verify-blob` against the `.sig.bundle`, pinning the OIDC issuer.
-3. **Preservation** (stretch). If you used a vault, confirm the Object Lock retention is still in the future.
+The gate step no longer ends the job on a policy violation. It records the verdict to `$GITHUB_ENV`, the bundling and signing steps run, and a final step reads the verdict and exits non-zero.
 
-Print `CHAIN INTACT` only if all checks pass.
+The reordering is the point. A run that blocked a merge is the run whose evidence matters most, and the original ordering discarded it. Preserving evidence only for passing runs collects the cases nobody needs to prove.
 
-## The tamper test (this is the deliverable)
+## Verification
 
-```bash
-cp evidence.tar.gz /tmp/tampered.tar.gz
-echo "junk" >> /tmp/tampered.tar.gz
-./verify-evidence.sh /tmp/tampered.tar.gz   # must FAIL on integrity
-./verify-evidence.sh evidence.tar.gz        # must say CHAIN INTACT
+`verify-evidence.sh` performs two checks and prints `CHAIN INTACT` only if both pass.
+
+```
+cd bundle
+bash ../verify-evidence.sh evidence-bundle.tar.gz
 ```
 
-One changed byte breaks the chain. That failure is the whole point: custody is mathematical, not a promise.
+Integrity is `sha256sum -c` against the sidecar. Authenticity is `cosign verify-blob` with both the OIDC issuer and the certificate identity pinned.
 
-## Cost
+Pinning the identity is not optional. Without `--certificate-identity-regexp`, Cosign accepts any valid Sigstore signature, which establishes that the file was signed by someone but says nothing about who. A verification that any signer passes is not an authenticity check.
 
-Free. Sigstore signing and verification cost nothing and need no cloud account. The only paid piece is the optional vault, which is pennies and gets torn down.
+## The tamper test
 
-## Stretch: the immutable vault
+A copy of the bundle with one byte appended fails immediately:
 
-For true preservation, upload the signed bundle to an S3 bucket with Object Lock and versioning on, so nobody can overwrite or delete it. Apply it, push one bundle, verify retention, then tear it down the same day. The brief covers the setup and teardown.
+```
+tampered.tar.gz: FAILED
+sha256sum: WARNING: 1 computed checksum did NOT match
+```
+
+The unmodified bundle returns `Verified OK` and `CHAIN INTACT`.
+
+Verification never reached the authenticity check on the tampered file. The script runs under `set -euo pipefail`, so the integrity failure ended it. Both checks would have failed independently: the hash no longer matches, and the signature was computed over the original bytes.
+
+One byte out of 262 is the same failure as rewriting the file. SHA-256 gives no partial credit, which is what makes it usable as evidence.
+
+## Note on identity pinning
+
+The first verification attempt failed against a correctly signed bundle. The regex matched the repository prefix, but Cosign requires the pattern to match the certificate subject in full, and the subject includes the workflow path and the git ref:
+
+```
+https://github.com/johnnyvaughanii-cyber/grc-pipeline/.github/workflows/grc-gate.yml@refs/pull/5/merge
+```
+
+The corrected pattern pins the repository and the specific workflow file, and allows any ref. Pinning the ref as well would mean the check only passes for one pull request.
+
+Worth noting which direction that failure ran. A too-narrow identity pattern rejects valid evidence, which is visible and gets fixed. A missing one accepts anything, which looks identical to working correctly.
