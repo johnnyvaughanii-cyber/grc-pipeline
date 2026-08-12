@@ -11,6 +11,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  id-token: write
 
 jobs:
   grc-gate:
@@ -33,13 +34,40 @@ jobs:
             --namespace compliance.sc28_aws \
             --namespace compliance.ac3_aws \
             --namespace compliance.cm6_aws \
-            --output json | tee evidence/conftest-results.json
+            --output json | tee evidence/conftest-results.json || echo "GATE_FAILED=true" >> "$GITHUB_ENV"
+      - name: Bundle evidence and hash it
+        if: always()
+        run: |
+          tar czf evidence-bundle.tar.gz evidence/
+          sha256sum evidence-bundle.tar.gz > evidence-bundle.tar.gz.sha256
+          cat evidence-bundle.tar.gz.sha256
+      - name: Sign evidence bundle
+        if: always()
+        uses: sigstore/cosign-installer@v3
+      - name: Cosign sign
+        if: always()
+        run: |
+          cosign sign-blob --yes \
+            --bundle evidence-bundle.tar.gz.sig.bundle \
+            evidence-bundle.tar.gz
       - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: grc-gate-evidence
-          path: evidence/
+          path: |
+            evidence/
+            evidence-bundle.tar.gz
+            evidence-bundle.tar.gz.sha256
+            evidence-bundle.tar.gz.sig.bundle
+      - name: Fail if the gate failed
+        if: always()
+        run: |
+          if [ "${GATE_FAILED:-false}" = "true" ]; then
+            echo "Policy violations detected. See evidence/conftest-results.json."
+            exit 1
+          fi
+          echo "All policies passed."
 
       # STRETCH: instead of a committed plan.json, assume an AWS role via OIDC
       #          (no stored keys) and generate the plan in CI. See the brief.
