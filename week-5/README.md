@@ -1,43 +1,70 @@
-# Week 5 starter: Turn On the Cameras
+# Week 5: Native Cloud Controls
 
-This is the one week that touches billable AWS services. The starter gives you a `teardown.sh` so you can shut it all down the same day. The Terraform is yours to write.
+Terraform that stands up an account-level audit trail, captures what it produces as evidence, and tears the whole thing down the same day.
 
-## Read this first: cost
+Applied and destroyed on 2026-08-12. Nothing from this week is still running.
 
-- **CloudTrail** management events are free. Do not enable data events.
-- **Security Hub** bills roughly $0.001 per check. The NIST 800-53 standard is a few hundred checks, so under about $1 per month, and pennies if you tear down within the hour.
-- **AWS Config** costs more and is often blocked by an org policy. It is optional this week. Skip it unless you want it.
+## Controls
 
-If you apply and destroy the same day, expect well under $1. If you walk away and leave it running, it adds up slowly. **Tear it down.**
+| Control | Requirement | Implementation |
+|---|---|---|
+| AU-2 | Event logging | A CloudTrail trail recording management events across the account |
+| AU-12 | Audit record generation | `is_multi_region_trail = true`, so records are generated in every region rather than one |
+| AU-10 | Non-repudiation | `enable_log_file_validation = true`, which produces signed hourly digest files covering the delivered logs |
+| RA-5 | Vulnerability and configuration scanning | Not implemented. See below |
+| SI-4 | System monitoring | Not implemented. See below |
 
-## What you build (your Terraform)
+## Why log file validation is the control
 
-1. A multi-region **CloudTrail** with `enable_log_file_validation = true`, writing to a private, encrypted S3 bucket with a correct bucket policy (it needs the `aws:SourceArn` condition scoped to your trail). Maps to AU-2, AU-12, AU-10.
-2. **Security Hub** enabled with the NIST 800-53 Rev 5 standard subscribed. Maps to RA-5, SI-4.
+A log that can be edited after the fact is a record of what someone was willing to leave behind.
 
-Then wait 10 to 20 minutes for findings to populate, and capture them.
+With validation enabled, CloudTrail writes a digest file every hour listing the delivered log files and their hashes, signed with a private key AWS holds. `aws cloudtrail validate-logs` checks the digest chain and reports any log file that was modified or deleted after delivery. The account owner cannot alter a log and have it still validate.
 
-## Capture evidence, then tear down
+This is the same property built by hand in Week 4 with Cosign, applied to the account's own audit trail: the proof of integrity lives outside the control of the party being audited.
 
-```bash
-./teardown.sh
+## Multi-region is not a detail
+
+A single-region trail records activity in one region. Creating resources in an unmonitored region is a standard evasion, and it defeats a single-region trail completely. `is_multi_region_trail = true` is what makes AU-12 an account-wide assertion rather than a regional one.
+
+## Data events are deliberately off
+
+CloudTrail management events are free. Data events — object-level S3 reads and writes, Lambda invocations — bill per event and can accumulate quickly. This build records management events only.
+
+Not a cost-cutting compromise. Scope is a control decision: recording everything is not the same as recording the right things, and an audit trail nobody can afford to keep is not an audit trail.
+
+## The bucket policy
+
+CloudTrail writes to the log bucket as a service principal, so the bucket policy has to permit it. Two statements: one allowing `s3:GetBucketAcl` so the service can confirm it may write, one allowing `s3:PutObject` scoped to the account's log prefix.
+
+Both statements carry an `aws:SourceArn` condition pinned to this trail's ARN. Without it the policy grants write access to the CloudTrail service generally, which means a trail in any AWS account could target this bucket. AWS now requires the condition rather than recommending it.
+
+The trail ARN is constructed in `locals` from the account ID and the trail name rather than read from the trail resource. Referencing the resource directly would create a cycle: the policy needs the trail's ARN, and the trail will not create until the policy exists.
+
+## RA-5 and SI-4 were not implemented
+
+Security Hub could not be enabled on this account. Both Terraform and the AWS CLI return the same error:
+
+```
+SubscriptionRequiredException: The AWS Access Key Id needs a subscription for the service
 ```
 
-`teardown.sh` captures `evidence/security-hub-findings.json` first, then runs `terraform destroy`. Sign that findings file with your week 4 pipeline so it joins your chain of custody.
+`describe-hub` returns it as well, so the account cannot subscribe rather than the request being malformed. This is an account registration or billing state issue, not an IAM permission and not a Terraform defect. The resources are left in `main.tf`, commented, so the gap is visible in the code rather than silently absent.
 
-## Done when
+The gap is recorded rather than worked around. Two controls in the intended scope are unimplemented, and the account's configuration posture is therefore unassessed. A control mapping that omitted RA-5 and SI-4 without comment would read as a smaller scope rather than an open finding, and the difference between those two is the entire value of the mapping.
 
-- `aws cloudtrail get-trail-status` shows `IsLogging: true` while it is up.
-- `aws securityhub get-findings` returns at least one finding.
-- `evidence/security-hub-findings.json` is captured and non-empty.
-- `terraform destroy` completes and nothing is left billing.
+## Verify
 
-## On GCP?
+```
+aws cloudtrail get-trail-status --name grc-challenge-trail --region us-east-1
+aws cloudtrail describe-trails --trail-name-list grc-challenge-trail --region us-east-1
+```
 
-The equivalent baseline is organization policy constraints plus Data Access audit logs, and Security Command Center in place of Security Hub. Same idea: native services that watch the project and report against a standard. Capture the findings, then tear it down.
+`evidence/cloudtrail-status.json` shows `IsLogging: true` with a successful delivery timestamp. `evidence/cloudtrail-config.json` shows `LogFileValidationEnabled: true`, `IsMultiRegionTrail: true`, and no data event selectors.
 
-## Common snags
+Raw CloudTrail log files are not committed. They contain source IP addresses and IAM principal identities, and this repository is public. The status and configuration files carry no request data.
 
-- **CloudTrail bucket policy rejected.** The policy needs the `aws:SourceArn` condition naming your trail. Scope it tightly.
-- **Security Hub already enabled.** Import it into state instead of applying: `terraform import aws_securityhub_account.this <ACCOUNT_ID>`.
-- **Config access denied.** Your org blocks Config centrally. Leave it out. The Security Hub finding that says Config is not enabled is itself valid evidence of the gap.
+## Teardown
+
+`teardown.sh` captures evidence and then runs `terraform destroy`. The log bucket carries `force_destroy = true` so destroy succeeds against a bucket holding delivered log files.
+
+Correct for a resource that exists for one afternoon, wrong for anything intended to persist: `force_destroy` removes the protection that stops a versioned bucket being deleted with its contents. The setting is defensible here because the bucket's lifetime is measured in hours and is stated as such.

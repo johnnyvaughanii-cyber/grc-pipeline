@@ -5,3 +5,5 @@
 terraform.tfvars
 crash.log
 tfplan
+*.json.gz
+week-5/logs/

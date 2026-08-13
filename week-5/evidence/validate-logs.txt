@@ -1,0 +1,6 @@
+Validating log files for trail arn:aws:cloudtrail:us-east-1:442426872368:trail/grc-challenge-trail between 2026-08-13T01:00:00Z and 2026-08-13T02:42:52Z
+
+Results requested for 2026-08-13T01:00:00Z to 2026-08-13T02:42:52Z
+Results found for 2026-08-13T01:00:00Z to 2026-08-13T01:27:54Z:
+
+1/1 digest files valid
