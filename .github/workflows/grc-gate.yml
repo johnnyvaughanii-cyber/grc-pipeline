@@ -38,7 +38,7 @@ jobs:
       - name: Bundle evidence and hash it
         if: always()
         run: |
-          tar czf evidence-bundle.tar.gz evidence/
+          tar czf evidence-bundle.tar.gz evidence/ week-5/evidence/
           sha256sum evidence-bundle.tar.gz > evidence-bundle.tar.gz.sha256
           cat evidence-bundle.tar.gz.sha256
       - name: Sign evidence bundle

@@ -1,0 +1,16 @@
+{
+    "trailList": [
+        {
+            "Name": "grc-challenge-trail",
+            "S3BucketName": "grc-challenge-cloudtrail-8a75d278",
+            "IncludeGlobalServiceEvents": true,
+            "IsMultiRegionTrail": true,
+            "HomeRegion": "us-east-1",
+            "TrailARN": "arn:aws:cloudtrail:us-east-1:442426872368:trail/grc-challenge-trail",
+            "LogFileValidationEnabled": true,
+            "HasCustomEventSelectors": false,
+            "HasInsightSelectors": false,
+            "IsOrganizationTrail": false
+        }
+    ]
+}
