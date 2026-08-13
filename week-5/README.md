@@ -22,6 +22,14 @@ With validation enabled, CloudTrail writes a digest file every hour listing the 
 
 This is the same property built by hand in Week 4 with Cosign, applied to the account's own audit trail: the proof of integrity lives outside the control of the party being audited.
 
+## Validation exercised, not just enabled
+
+Digest files were delivered to 17 regions within 20 minutes of the trail starting. `aws cloudtrail validate-logs` returned `1/1 digest files valid` against the delivered logs.
+
+`evidence/validate-logs.txt` holds the result. `evidence/digest-inventory.txt` lists the digests across all 17 regions, which is the AU-12 evidence: records are being generated account-wide rather than in the trail's home region only.
+
+Configuration proves the control was turned on. Validation proves it works. The two are not the same claim, and the second is the one an assessor can act on.
+
 ## Multi-region is not a detail
 
 A single-region trail records activity in one region. Creating resources in an unmonitored region is a standard evasion, and it defeats a single-region trail completely. `is_multi_region_trail = true` is what makes AU-12 an account-wide assertion rather than a regional one.
