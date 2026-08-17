@@ -6,4 +6,4 @@ terraform.tfvars
 crash.log
 tfplan
 *.json.gz
-week-5/logs/
+week-5/logs/week-6/traversal/

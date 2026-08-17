@@ -1,0 +1,29 @@
+{
+  "profile": {
+    "uuid": "3f2a7c91-8d54-4e6b-9a03-c5e1b4d78f26",
+    "metadata": {
+      "title": "GRC Engineering Pipeline Control Selection",
+      "last-modified": "2026-08-17T22:36:28.998+00:00",
+      "version": "1.0.0",
+      "oscal-version": "1.2.1"
+    },
+    "imports": [
+      {
+        "href": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+        "include-controls": [
+          {
+            "with-ids": [
+              "sc-28",
+              "ac-3",
+              "au-3",
+              "cm-6"
+            ]
+          }
+        ]
+      }
+    ],
+    "merge": {
+      "as-is": true
+    }
+  }
+}
