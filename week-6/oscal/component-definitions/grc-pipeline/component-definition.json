@@ -1,0 +1,112 @@
+{
+  "component-definition": {
+    "uuid": "6e68be4f-3126-4d32-95bd-dd7b31654f89",
+    "metadata": {
+      "title": "GRC Engineering Pipeline",
+      "last-modified": "2026-08-17T22:36:28.998+00:00",
+      "version": "1.0.0",
+      "oscal-version": "1.2.1"
+    },
+    "components": [
+      {
+        "uuid": "8c164f0e-54fb-4b89-883a-28edb2ac2994",
+        "type": "service",
+        "title": "Compliant S3 Storage Pipeline",
+        "description": "A pipeline that provisions S3 storage with Terraform, evaluates the Terraform plan against Rego policies in a GitHub Actions gate on every pull request, and signs the resulting evidence with Cosign keyless signing.",
+        "control-implementations": [
+          {
+            "uuid": "9d465a36-e78f-4b8d-b763-983b50085842",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "Controls enforced by Terraform, verified by Rego policy in CI, and evidenced by a Cosign-signed bundle.",
+            "implemented-requirements": [
+              {
+                "uuid": "bf6e58c8-dd6f-44ec-ac6d-177d9784b4da",
+                "control-id": "sc-28",
+                "description": "Server-side encryption is enforced by default on the primary and log buckets. The Rego policy checks the encryption algorithm against an approved allowlist rather than checking only that an encryption resource exists, so a plan declaring an unapproved algorithm is denied.",
+                "props": [
+                  {
+                    "name": "terraform-resource",
+                    "value": "aws_s3_bucket_server_side_encryption_configuration"
+                  },
+                  {
+                    "name": "policy-file",
+                    "value": "policies/sc28_encryption_aws.rego"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "https://raw.githubusercontent.com/johnnyvaughanII-cyber/grc-pipeline/main/week-4/bundle/evidence-bundle.tar.gz",
+                    "rel": "evidence",
+                    "text": "Cosign-signed evidence bundle containing the gate results"
+                  }
+                ]
+              },
+              {
+                "uuid": "fa76cfbd-1ed8-48ef-8e9f-8f8546e8875b",
+                "control-id": "ac-3",
+                "description": "Public access is blocked on all four vectors. The Rego policy denies any bucket whose public access block is missing or has any of the four flags set to false.",
+                "props": [
+                  {
+                    "name": "terraform-resource",
+                    "value": "aws_s3_bucket_public_access_block"
+                  },
+                  {
+                    "name": "policy-file",
+                    "value": "policies/ac3_no_public_aws.rego"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "https://raw.githubusercontent.com/johnnyvaughanII-cyber/grc-pipeline/main/week-4/bundle/evidence-bundle.tar.gz",
+                    "rel": "evidence",
+                    "text": "Cosign-signed evidence bundle containing the gate results"
+                  }
+                ]
+              },
+              {
+                "uuid": "8e0ef619-da3f-4e08-bdb5-b9827fa89e72",
+                "control-id": "au-3",
+                "description": "Server access logging on the primary bucket writes to a segregated log bucket, with object ownership controls and a log-delivery ACL sequenced ahead of the logging resource.",
+                "props": [
+                  {
+                    "name": "terraform-resource",
+                    "value": "aws_s3_bucket_logging"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "https://raw.githubusercontent.com/johnnyvaughanII-cyber/grc-pipeline/main/week-4/bundle/evidence-bundle.tar.gz",
+                    "rel": "evidence",
+                    "text": "Cosign-signed evidence bundle containing the gate results"
+                  }
+                ]
+              },
+              {
+                "uuid": "f8f95fed-3826-42ad-a226-f21fdf6a038e",
+                "control-id": "cm-6",
+                "description": "Versioning is enabled on the primary bucket, and four mandatory tags are applied through the provider default_tags block so no taggable resource can be created without them. The Rego policy scopes its check to resources carrying tags_all, which excludes non-taggable resources that would otherwise produce false positives.",
+                "props": [
+                  {
+                    "name": "terraform-resource",
+                    "value": "aws_s3_bucket_versioning"
+                  },
+                  {
+                    "name": "policy-file",
+                    "value": "policies/cm6_required_tags_aws.rego"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "https://raw.githubusercontent.com/johnnyvaughanII-cyber/grc-pipeline/main/week-4/bundle/evidence-bundle.tar.gz",
+                    "rel": "evidence",
+                    "text": "Cosign-signed evidence bundle containing the gate results"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
