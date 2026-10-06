@@ -1,52 +1,48 @@
-# Week 6 starter: Speak the Auditor's Language
+# Week 6: Speak the Auditor's Language
 
-Two builds this week. An OSCAL control mapping, and the portfolio case study that presents the whole pipeline as one system. The starter is a README and a case-study template. The OSCAL is yours to author with trestle.
+An OSCAL component definition and profile that map the pipeline to NIST SP 800-53 Rev. 5. Each mapped control links to the signed evidence bundle from Week 4, so an assessor can move from the control statement to verified evidence without asking me for anything. Both documents validate clean against OSCAL 1.2.1 with compliance-trestle.
 
-## Setup
+The [portfolio case study](PORTFOLIO-CASE-STUDY.md) presents all 6 weeks as one system.
+
+## What's here
+
+| File | Contents |
+|---|---|
+| `oscal/profiles/grc-pipeline-profile/profile.json` | Selects sc-28, ac-3, au-3, and cm-6 from the public NIST SP 800-53 Rev. 5 catalog |
+| `oscal/component-definitions/grc-pipeline/component-definition.json` | 1 component, Compliant S3 Storage Pipeline, with 1 implemented requirement per selected control |
+| `PORTFOLIO-CASE-STUDY.md` | The 6-week build written up as one pipeline |
+
+## Controls mapped
+
+| Control | Terraform resource | Policy |
+|---|---|---|
+| sc-28 | `aws_s3_bucket_server_side_encryption_configuration` | `week-2/policies/sc28_encryption_aws.rego` |
+| ac-3 | `aws_s3_bucket_public_access_block` | `week-2/policies/ac3_no_public_aws.rego` |
+| au-3 | `aws_s3_bucket_logging` | None |
+| cm-6 | `aws_s3_bucket_versioning` | `week-2/policies/cm6_required_tags_aws.rego` |
+
+Each implemented requirement names its Terraform resource and policy file as props and carries a link with `rel: evidence` to `week-4/bundle/evidence-bundle.tar.gz`. The control implementation's `source` is the NIST SP 800-53 Rev. 5 JSON catalog published in usnistgov/oscal-content.
+
+## Validate
 
 ```bash
 pip install compliance-trestle
-trestle init
+cd week-6/oscal
+trestle validate -f component-definitions/grc-pipeline/component-definition.json
+trestle validate -f profiles/grc-pipeline-profile/profile.json
 ```
 
-trestle is NIST's OSCAL toolkit. It generates valid skeletons and validates your documents against the strict OSCAL schema.
+Both return `VALID`.
 
-## What you build
+## The traversal
 
-1. A **component definition** describing your work. Create the skeleton with `trestle create -t component-definition -o my-pipeline -x json`, then fill it in:
-   - One `implemented-requirement` per control you actually satisfied: sc-28, ac-3, au-3, cm-6.
-   - For each, a prop naming the Terraform resource that implements it, and a `links` entry with `rel: evidence` whose `href` points at your signed bundle from week 4.
-   - `source` is the public NIST 800-53 Rev 5 catalog URL.
-2. A **profile** that selects exactly those control IDs from the catalog. Create with `trestle create -t profile`, list your control IDs under `include-controls`.
+I tested the mapping by following an evidence link the way an outside assessor would. I downloaded the bundle from the URL in the component definition into a directory that had never held it, recomputed the SHA-256 hash against the sidecar, and ran `verify-evidence.sh`. The hash matched, `cosign verify-blob` confirmed the signature against the GitHub Actions OIDC issuer and this repository's workflow identity, and the script printed `CHAIN INTACT`.
 
-Validate both:
+## Open items
 
-```bash
-trestle validate -f component-definitions/my-pipeline/component-definition.json
-trestle validate -f profiles/<name>/profile.json
-```
-
-You want `VALID` on both.
-
-## Two things that will bite you
-
-- **UUIDs must be v4.** Do not hand-write them. `python3 -c "import uuid; print(uuid.uuid4())"` per UUID. trestle rejects the wrong format.
-- **Versions must match.** The catalog, profile, and component must share an `oscal-version`. trestle pins one; check with `trestle version`.
-
-## Prove the traversal
-
-Pick one control in your component, follow its evidence `href` to your vault (or your signed bundle), and run your week 4 `verify-evidence.sh`. Seeing `CHAIN INTACT` means the whole chain is wired: control mapping, evidence link, signed bundle. That is the demonstration.
-
-## The capstone: your portfolio case study
-
-Fill in `PORTFOLIO-CASE-STUDY.md`. This is the page that makes a hiring manager stop. It presents all six weeks as one pipeline you built, with the controls it enforces and the evidence it produces. Put it at the top of your portfolio.
-
-## Done when
-
-- `trestle validate` returns VALID for the component and the profile.
-- At least one evidence link resolves to a real signed bundle.
-- Your case study is published on your portfolio and links to the repo.
+- Evidence links point to the bundle committed in this repository, not an S3 Object Lock vault. The links resolve, but nothing prevents the bundle from being overwritten or deleted.
+- The mapping covers 4 controls. Week 5's AU-2, AU-10, and AU-12 aren't in the component definition yet.
 
 ## Cost
 
-Free. OSCAL is JSON in your repo. Nothing to deploy, nothing to tear down.
+None. OSCAL is JSON in the repository, so there was nothing to deploy or tear down.
