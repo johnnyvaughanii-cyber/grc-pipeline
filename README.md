@@ -29,6 +29,8 @@ You'll need `cosign` and `sha256sum`. The script recomputes the bundle's SHA-256
 | [5](week-5/) | Multi-region CloudTrail with log file validation, applied and torn down the same day | Complete |
 | [6](week-6/) | OSCAL component definition and profile with evidence links, plus the case study | Complete |
 
+[Lab 2.5](lab-2-5/) sits outside the 6 weeks. It builds an S3 Object Lock evidence vault from the CGE-P labs and captures the Week 1 workspace into it.
+
 ## Controls
 
 | Control | Implementation | Week |
@@ -41,14 +43,13 @@ You'll need `cosign` and `sha256sum`. The script recomputes the bundle's SHA-256
 | AU-10 | CloudTrail log file validation, producing signed hourly digest files | 5 |
 | RA-5, SI-4 | Not implemented. Security Hub returns `SubscriptionRequiredException` on this account | 5 |
 
-The Week 3 gate enforces SC-28, AC-3, and CM-6 on every pull request. [PR #1](https://github.com/johnnyvaughanii-cyber/grc-pipeline/pull/1) passed the gate and merged. [PR #2](https://github.com/johnnyvaughanii-cyber/grc-pipeline/pull/2) broke encryption and is permanently blocked. The Week 6 OSCAL component definition maps SC-28, AC-3, AU-3, and CM-6.
+The Week 3 gate enforces SC-28, AC-3, and CM-6 on every pull request. [PR #1](https://github.com/johnnyvaughanii-cyber/grc-pipeline/pull/1) passed the gate and merged. [PR #2](https://github.com/johnnyvaughanii-cyber/grc-pipeline/pull/2) broke encryption and is permanently blocked. The Week 6 OSCAL component definition maps SC-28, AC-3, AU-3, CM-6, AU-2, AU-12, and AU-10.
 
 ## Open items
 
 - The Terraform plan is committed rather than generated in CI. Generating it in the workflow needs GitHub OIDC federation to an AWS role that trusts only this repository.
-- Signed bundles are committed to this repository rather than stored in an S3 Object Lock vault, so the preservation property of chain of custody isn't met yet.
+- Signed bundles are committed to this repository rather than stored in an S3 Object Lock vault, so the preservation property of chain of custody isn't met yet. Lab 2.5 tested the vault pattern in a lab-scoped deployment that has since been torn down.
 - RA-5 and SI-4 stay open until Security Hub can be enabled on the account.
-- The OSCAL mapping doesn't include the Week 5 CloudTrail controls yet.
 
 ## Stack
 

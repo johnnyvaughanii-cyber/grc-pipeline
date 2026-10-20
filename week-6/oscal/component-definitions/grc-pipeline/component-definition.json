@@ -3,8 +3,8 @@
     "uuid": "6e68be4f-3126-4d32-95bd-dd7b31654f89",
     "metadata": {
       "title": "GRC Engineering Pipeline",
-      "last-modified": "2026-08-17T22:36:28.998+00:00",
-      "version": "1.0.0",
+      "last-modified": "2026-10-20T01:18:45.928+00:00",
+      "version": "1.1.0",
       "oscal-version": "1.2.1"
     },
     "components": [
@@ -100,6 +100,105 @@
                     "href": "https://raw.githubusercontent.com/johnnyvaughanII-cyber/grc-pipeline/main/week-4/bundle/evidence-bundle.tar.gz",
                     "rel": "evidence",
                     "text": "Cosign-signed evidence bundle containing the gate results"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "f423169c-7d82-4e95-b47b-d7c744ea223d",
+        "type": "service",
+        "title": "Account Audit Trail",
+        "description": "A multi-region CloudTrail trail with log file validation, writing to a private encrypted bucket whose policy scopes the CloudTrail service principal to this trail with an aws:SourceArn condition. Built with Terraform in Week 5, applied and destroyed on 2026-08-12. Evidence was captured before teardown and is included in the signed bundle.",
+        "control-implementations": [
+          {
+            "uuid": "65640c53-e8ac-427f-b1fb-04ad350c2e69",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "Controls implemented by the CloudTrail configuration and evidenced by captured configuration, status, and log validation output.",
+            "implemented-requirements": [
+              {
+                "uuid": "235e07fa-c1d2-4379-be05-3e2a2dc416fa",
+                "control-id": "au-2",
+                "description": "A CloudTrail trail records management events across the account. Data events are excluded by design, and the captured trail configuration shows no data event selectors.",
+                "props": [
+                  {
+                    "name": "terraform-resource",
+                    "value": "aws_cloudtrail"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "https://raw.githubusercontent.com/johnnyvaughanII-cyber/grc-pipeline/main/week-4/bundle/evidence-bundle.tar.gz",
+                    "rel": "evidence",
+                    "text": "Cosign-signed evidence bundle, which includes the Week 5 CloudTrail evidence"
+                  },
+                  {
+                    "href": "https://raw.githubusercontent.com/johnnyvaughanII-cyber/grc-pipeline/main/week-5/evidence/cloudtrail-config.json",
+                    "rel": "evidence",
+                    "text": "Trail configuration captured before teardown"
+                  },
+                  {
+                    "href": "https://raw.githubusercontent.com/johnnyvaughanII-cyber/grc-pipeline/main/week-5/evidence/cloudtrail-status.json",
+                    "rel": "evidence",
+                    "text": "Trail status showing IsLogging true with a successful delivery"
+                  }
+                ]
+              },
+              {
+                "uuid": "b811f480-2cfa-443f-b9df-cff74d954027",
+                "control-id": "au-12",
+                "description": "The trail sets is_multi_region_trail = true, so audit records are generated in every region rather than only the trail's home region. Digest files were delivered to 17 regions within 20 minutes of the trail starting.",
+                "props": [
+                  {
+                    "name": "terraform-resource",
+                    "value": "aws_cloudtrail"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "https://raw.githubusercontent.com/johnnyvaughanII-cyber/grc-pipeline/main/week-4/bundle/evidence-bundle.tar.gz",
+                    "rel": "evidence",
+                    "text": "Cosign-signed evidence bundle, which includes the Week 5 CloudTrail evidence"
+                  },
+                  {
+                    "href": "https://raw.githubusercontent.com/johnnyvaughanII-cyber/grc-pipeline/main/week-5/evidence/digest-inventory.txt",
+                    "rel": "evidence",
+                    "text": "Digest file inventory across 17 regions"
+                  },
+                  {
+                    "href": "https://raw.githubusercontent.com/johnnyvaughanII-cyber/grc-pipeline/main/week-5/evidence/cloudtrail-config.json",
+                    "rel": "evidence",
+                    "text": "Trail configuration showing IsMultiRegionTrail true"
+                  }
+                ]
+              },
+              {
+                "uuid": "f02f2ced-0bcc-4b54-848c-bbf867db68cf",
+                "control-id": "au-10",
+                "description": "The trail sets enable_log_file_validation = true, so CloudTrail writes signed hourly digest files listing each delivered log file and its hash. aws cloudtrail validate-logs returned 1/1 digest files valid against the delivered logs.",
+                "props": [
+                  {
+                    "name": "terraform-resource",
+                    "value": "aws_cloudtrail"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "https://raw.githubusercontent.com/johnnyvaughanII-cyber/grc-pipeline/main/week-4/bundle/evidence-bundle.tar.gz",
+                    "rel": "evidence",
+                    "text": "Cosign-signed evidence bundle, which includes the Week 5 CloudTrail evidence"
+                  },
+                  {
+                    "href": "https://raw.githubusercontent.com/johnnyvaughanII-cyber/grc-pipeline/main/week-5/evidence/validate-logs.txt",
+                    "rel": "evidence",
+                    "text": "Output of aws cloudtrail validate-logs"
+                  },
+                  {
+                    "href": "https://raw.githubusercontent.com/johnnyvaughanII-cyber/grc-pipeline/main/week-5/evidence/cloudtrail-config.json",
+                    "rel": "evidence",
+                    "text": "Trail configuration showing LogFileValidationEnabled true"
                   }
                 ]
               }

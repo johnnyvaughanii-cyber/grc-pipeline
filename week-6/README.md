@@ -8,8 +8,8 @@ The [portfolio case study](PORTFOLIO-CASE-STUDY.md) presents all 6 weeks as one 
 
 | File | Contents |
 |---|---|
-| `oscal/profiles/grc-pipeline-profile/profile.json` | Selects sc-28, ac-3, au-3, and cm-6 from the public NIST SP 800-53 Rev. 5 catalog |
-| `oscal/component-definitions/grc-pipeline/component-definition.json` | 1 component, Compliant S3 Storage Pipeline, with 1 implemented requirement per selected control |
+| `oscal/profiles/grc-pipeline-profile/profile.json` | Selects sc-28, ac-3, au-3, cm-6, au-2, au-10, and au-12 from the public NIST SP 800-53 Rev. 5 catalog |
+| `oscal/component-definitions/grc-pipeline/component-definition.json` | 2 components, Compliant S3 Storage Pipeline and Account Audit Trail, with 1 implemented requirement per selected control |
 | `PORTFOLIO-CASE-STUDY.md` | The 6-week build written up as one pipeline |
 
 ## Controls mapped
@@ -20,8 +20,13 @@ The [portfolio case study](PORTFOLIO-CASE-STUDY.md) presents all 6 weeks as one 
 | ac-3 | `aws_s3_bucket_public_access_block` | `week-2/policies/ac3_no_public_aws.rego` |
 | au-3 | `aws_s3_bucket_logging` | None |
 | cm-6 | `aws_s3_bucket_versioning` | `week-2/policies/cm6_required_tags_aws.rego` |
+| au-2 | `aws_cloudtrail` | None |
+| au-12 | `aws_cloudtrail` | None |
+| au-10 | `aws_cloudtrail` | None |
 
 Each implemented requirement names its Terraform resource and policy file as props and carries a link with `rel: evidence` to `week-4/bundle/evidence-bundle.tar.gz`. The control implementation's `source` is the NIST SP 800-53 Rev. 5 JSON catalog published in usnistgov/oscal-content.
+
+The 3 audit trail requirements also link to the specific file in `week-5/evidence/` that supports each one. The bundle was refreshed in Week 5 and includes those files. The 3 AU controls were added to the mapping in October 2026, after the challenge closed.
 
 ## Validate
 
@@ -41,7 +46,6 @@ I tested the mapping by following an evidence link the way an outside assessor w
 ## Open items
 
 - Evidence links point to the bundle committed in this repository, not an S3 Object Lock vault. The links resolve, but nothing prevents the bundle from being overwritten or deleted.
-- The mapping covers 4 controls. Week 5's AU-2, AU-10, and AU-12 aren't in the component definition yet.
 
 ## Cost
 
