@@ -19,7 +19,7 @@ Repository: https://github.com/johnnyvaughanII-cyber/grc-pipeline
 
 **Native monitoring controls.** A multi-region CloudTrail writes to a private encrypted bucket with `enable_log_file_validation = true`, which produces signed hourly digest files and maps AU-2, AU-12, and AU-10. The bucket policy scopes the CloudTrail service principal with an `aws:SourceArn` condition bound to the specific trail. Everything was torn down the same day.
 
-**A control mapping an assessor can traverse.** An OSCAL component definition and profile, both authored with trestle and both validating clean against OSCAL 1.2.1. The profile selects exactly four control IDs from the public NIST 800-53 Rev. 5 catalog. The component definition carries one implemented requirement per control, each naming the Terraform resource that does the work and each linking to the signed evidence bundle with `rel: evidence`.
+**A control mapping an assessor can traverse.** An OSCAL component definition and profile, both authored with trestle and both validating clean against OSCAL 1.2.1. The profile selects 7 control IDs from the public NIST 800-53 Rev. 5 catalog. The component definition has 2 components, the S3 storage pipeline and the account audit trail, and carries one implemented requirement per control, each naming the Terraform resource that does the work and each linking to the signed evidence bundle with `rel: evidence`.
 
 ## The traversal
 
@@ -41,7 +41,7 @@ The pipeline commits a Terraform plan rather than generating one in CI. Generati
 
 ## What I would do next
 
-Move plan generation into CI with OIDC so no credentials are stored anywhere. Add an S3 Object Lock vault so the signed bundles cannot be overwritten or deleted, including by me, which closes the preservation property of chain of custody. Extend the OSCAL beyond four controls once there are more implementations genuinely worth claiming.
+Move plan generation into CI with OIDC so no credentials are stored anywhere. Add an S3 Object Lock vault so the signed bundles cannot be overwritten or deleted, including by me, which closes the preservation property of chain of custody. Extend the OSCAL beyond these 7 controls once there are more implementations genuinely worth claiming.
 
 ## The non-obvious thing
 

@@ -3,8 +3,8 @@
     "uuid": "3f2a7c91-8d54-4e6b-9a03-c5e1b4d78f26",
     "metadata": {
       "title": "GRC Engineering Pipeline Control Selection",
-      "last-modified": "2026-08-17T22:36:28.998+00:00",
-      "version": "1.0.0",
+      "last-modified": "2026-10-20T01:18:45.928+00:00",
+      "version": "1.1.0",
       "oscal-version": "1.2.1"
     },
     "imports": [
@@ -16,7 +16,10 @@
               "sc-28",
               "ac-3",
               "au-3",
-              "cm-6"
+              "cm-6",
+              "au-2",
+              "au-10",
+              "au-12"
             ]
           }
         ]
